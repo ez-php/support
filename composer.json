@@ -1,6 +1,6 @@
 {
   "name": "ez-php/support",
-  "version": "1.11.1",
+  "version": "1.11.2",
   "description": "General-purpose utility classes for the ez-php ecosystem — Range, WeightedRandom, TimeProbability, DailyQuota",
   "type": "library",
   "license": "MIT",
