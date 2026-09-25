@@ -241,7 +241,7 @@ Only set a port for services the module actually uses. Modules without external 
 
 > The `MEILISEARCH_PORT` column is the **host** port. Inside a Compose network the service is always reachable at `http://meilisearch:7700` regardless of the host mapping — only publish-side ports need to be unique.
 
-> The "Redis host port" column is likewise the **host**-published port. `ez-php/cache`, `ez-php/queue`, and `ez-php/rate-limiter` map it through a separate `REDIS_HOST_PORT` env var in `docker-compose.yml`, keeping `REDIS_PORT` fixed at `6379` for in-container connections (the app container always reaches Redis at `redis:6379` over the Compose network, regardless of the host mapping) — the root project and the `ez-php/` application template are the two exceptions, since both have no host/container split and use `REDIS_PORT` for both (the template's other in-container Redis settings — `CACHE_REDIS_PORT`, `QUEUE_REDIS_PORT`, `RATE_LIMITER_REDIS_PORT` — stay fixed at `6379` regardless, same as every other module).
+> The "Redis host port" column is likewise the **host**-published port. `ez-php/cache`, `ez-php/queue`, and `ez-php/rate-limiter` map it through a separate `REDIS_HOST_PORT` env var in `docker-compose.yml`, keeping `REDIS_PORT` fixed at `6379` for in-container connections (the app container always reaches Redis at `redis:6379` over the Compose network, regardless of the host mapping) — the root project and the `ez-php/` application template are the two exceptions, since both have no host/container split and use `REDIS_PORT` for both (the template's other in-container Redis settings — `CACHE_REDIS_PORT`, `QUEUE_REDIS_PORT`, `RATE_LIMITER_REDIS_PORT`, `HEALTH_REDIS_PORT` — stay fixed at `6379` regardless, same as every other module).
 
 > This table tracks only MySQL, Redis, and Meilisearch ports — the three services shared across multiple modules where a collision is otherwise easy to introduce. Mailpit is the one other service with published host ports: SMTP `1025` and web UI `8025`. `ez-php/mail` maps them through `MAILPIT_SMTP_HOST_PORT`/`MAILPIT_API_HOST_PORT` in `modules/mail/docker-compose.yml` (mirroring the `*_HOST_PORT` pattern above, documented in `modules/mail/.env.example`); the root project and the `ez-php/` template each run their own Mailpit on the same defaults (`MAIL_PORT`/`MAIL_WEB_PORT`), so **these three stacks cannot run at the same time** without overriding those variables. It isn't a table column because no module beyond those three runs Mailpit — but a new module adding its own single-use service's ports should likewise parameterize them and document the defaults in its own `.env.example` rather than adding a column here.
 
@@ -266,14 +266,16 @@ src/
 ├── Range.php            — Immutable integer range: contains, clamp, random, weightedLow
 ├── WeightedRandom.php   — Weighted random selection: pick, pickN (no replacement), weightedLow
 ├── TimeProbability.php  — Exponential time-based probability curve with hard cap
-└── DailyQuota.php       — Daily allowance + growing cooldown + UTC midnight reset (immutable)
+├── DailyQuota.php       — Daily allowance + growing cooldown + UTC midnight reset (immutable)
+└── CronExpression.php   — Five-field cron matcher (`*`, `N`, `*/N`); shared by ez-php/scheduler and ez-php/queue
 
 tests/
 ├── TestCase.php             — Base PHPUnit test case
 ├── RangeTest.php            — Range unit tests
 ├── WeightedRandomTest.php   — WeightedRandom unit + statistical tests
 ├── TimeProbabilityTest.php  — TimeProbability deterministic + behavioural tests
-└── DailyQuotaTest.php       — DailyQuota state machine tests with controlled time
+├── DailyQuotaTest.php       — DailyQuota state machine tests with controlled time
+└── SupportCronExpressionTest.php — field patterns, day-of-week numbering, malformed expressions (name-prefixed: shared Tests\ namespace)
 ```
 
 ---
@@ -338,6 +340,7 @@ Cooldown formula after `n`-th action: `base + step × n` seconds.
 
 ## Design Decisions and Constraints
 
+- **`CronExpression` lives here so `ez-php/scheduler` and `ez-php/queue` can share it.** Both matched the same cron subset with identical private copies; a zero-dependency utility package is the one place both can require without coupling to each other or the framework. It is deliberately minimal (`*`, `N`, `*/N`, malformed = never due) — the exact behaviour both copies had.
 - **Immutable value objects** — All classes are `final`. State changes return new instances. Callers own persistence.
 - **No framework coupling** — Zero dependencies; usable standalone or with any framework.
 - **`WeightedRandom` uses float accumulation** — Handles fractional weights (e.g. `0.5`). The `$last` fallback handles floating-point precision edge cases where the cumulative sum falls marginally short of total.

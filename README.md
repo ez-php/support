@@ -73,6 +73,19 @@ $quota->usedToday();      // actions performed today
 UTC midnight resets happen automatically inside `canPerform()` and `perform()`. Call
 `resetIfNeeded($now)` explicitly to get a fresh instance without performing an action.
 
+### CronExpression
+
+Minimal five-field cron matcher (`minute hour day-of-month month day-of-week`), used by
+`ez-php/scheduler` and `ez-php/queue`.
+
+```php
+CronExpression::isDue('*/15 * * * *', new DateTimeImmutable()); // every 15 minutes
+CronExpression::isDue('0 6 * * 1', $now);                       // Mondays at 06:00
+```
+
+Supports `*`, `N` and `*/N` per field; day-of-week is 0–6 with Sunday = 0. Ranges, lists
+and names are not supported. A malformed expression (not exactly five fields) is never due.
+
 ## Installation
 
 ```bash
