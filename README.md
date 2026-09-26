@@ -73,6 +73,48 @@ $quota->usedToday();      // actions performed today
 UTC midnight resets happen automatically inside `canPerform()` and `perform()`. Call
 `resetIfNeeded($now)` explicitly to get a fresh instance without performing an action.
 
+### XpProgression / LevelUpResult
+
+Configurable exponential XP curve — the threshold for level N is `floor(base × N^exponent)`.
+XP accumulates and is never reset, so one call can cross several levels.
+
+```php
+$curve  = new XpProgression(base: 100, exponent: 1.5);
+$curve->xpForLevel(4);                                  // 800
+
+$result = $curve->applyXp(currentXp: 250, currentLevel: 1, gained: 600);
+$result->newXp();       // 850
+$result->newLevel();    // 4
+$result->levelUps();    // 3
+$result->didLevelUp();  // true
+```
+
+### DimensionSet
+
+Immutable set of named dimensions, each clamped to `[0, 100]` — personality, mood,
+reputation, skill stats.
+
+```php
+$mood = new DimensionSet(['joy' => 40, 'anger' => 10]);
+$mood = $mood->apply(['joy' => 30, 'fear' => 5]);  // joy 70, anger 10, fear 5
+
+$mood->get('joy');        // 70
+$mood->dominant(50);      // 'joy' (highest value strictly above 50), or null
+$mood->all();             // ['joy' => 70, 'anger' => 10, 'fear' => 5]
+```
+
+### Coordinate / InfiniteGrid
+
+`Coordinate` is a readonly `(x, y)` pair; `InfiniteGrid` does stateless tile math for
+8-directional grids using the Chebyshev metric (diagonals cost the same as cardinals).
+
+```php
+InfiniteGrid::adjacentCoordinates(0, 0);      // 8 Coordinate neighbours
+InfiniteGrid::isAdjacent(0, 0, 1, 1);         // true
+InfiniteGrid::chebyshevDistance(0, 0, 3, -2); // 3
+InfiniteGrid::tilesInRadius(0, 0, 1);         // 9 tiles, centre included
+```
+
 ### CronExpression
 
 Minimal five-field cron matcher (`minute hour day-of-month month day-of-week`), used by
