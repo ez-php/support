@@ -125,8 +125,9 @@ CronExpression::isDue('*/15 * * * *', new DateTimeImmutable()); // every 15 minu
 CronExpression::isDue('0 6 * * 1', $now);                       // Mondays at 06:00
 ```
 
-Supports `*`, `N` and `*/N` per field; day-of-week is 0–6 with Sunday = 0. Ranges, lists
-and names are not supported. A malformed expression (not exactly five fields) is never due.
+Supports `*`, `N`, `A-B`, `*/N`, `A-B/N` and comma-separated lists of those per field
+(`0 8-18/2 * * 1-5`); day-of-week is 0–6 with Sunday = 0. Names, macros (`@daily`) and
+`L`/`W`/`#` are not supported; a malformed field never matches. A malformed expression (not exactly five fields) is never due.
 
 ## Installation
 

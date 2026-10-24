@@ -282,7 +282,7 @@ src/
 ├── DimensionSet.php     — Immutable set of named dimensions clamped to [0, 100]; apply deltas, dominant()
 ├── Coordinate.php       — Readonly 2D integer coordinate (x, y)
 ├── InfiniteGrid.php     — Stateless Chebyshev-metric grid math: neighbours, adjacency, distance, radius
-└── CronExpression.php   — Five-field cron matcher (`*`, `N`, `*/N`); shared by ez-php/scheduler and ez-php/queue
+└── CronExpression.php   — Five-field cron matcher (`*`, `N`, `A-B`, `*/N`, `A-B/N`, lists); shared by ez-php/scheduler and ez-php/queue
 
 tests/
 ├── TestCase.php             — Base PHPUnit test case
@@ -393,7 +393,7 @@ Immutable set of named integer dimensions, each clamped to `[0, 100]` (personali
 
 ## Design Decisions and Constraints
 
-- **`CronExpression` lives here so `ez-php/scheduler` and `ez-php/queue` can share it.** Both matched the same cron subset with identical private copies; a zero-dependency utility package is the one place both can require without coupling to each other or the framework. It is deliberately minimal (`*`, `N`, `*/N`, malformed = never due) — the exact behaviour both copies had.
+- **`CronExpression` lives here so `ez-php/scheduler` and `ez-php/queue` can share it.** Both matched the same cron subset with identical private copies; a zero-dependency utility package is the one place both can require without coupling to each other or the framework. It stays deliberately small: `*`, `N`, `A-B`, `*/N`, `A-B/N` and comma lists, five fields only; names, macros and `L`/`W`/`#` are out of scope. Any malformed field fails closed (never due) instead of throwing, because both callers evaluate expressions every minute in long-running loops.
 - **Immutable value objects** — All classes are `final`. State changes return new instances. Callers own persistence.
 - **No framework coupling** — Zero dependencies; usable standalone or with any framework.
 - **`WeightedRandom` uses float accumulation** — Handles fractional weights (e.g. `0.5`). The `$last` fallback handles floating-point precision edge cases where the cumulative sum falls marginally short of total.
