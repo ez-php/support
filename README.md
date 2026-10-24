@@ -127,7 +127,7 @@ CronExpression::isDue('0 6 * * 1', $now);                       // Mondays at 06
 
 Supports `*`, `N`, `A-B`, `*/N`, `A-B/N` and comma-separated lists of those per field
 (`0 8-18/2 * * 1-5`); day-of-week is 0–6 with Sunday = 0. Names, macros (`@daily`) and
-`L`/`W`/`#` are not supported; a malformed field never matches. A malformed expression (not exactly five fields) is never due.
+`L`/`W`/`#` are not supported; a malformed field never matches. When both day-of-month and day-of-week are restricted, either one matching is enough (standard cron): `0 9 1,15 * 1-5` runs on the 1st, the 15th and every weekday. If either field starts with `*`, both must match. A malformed expression (not exactly five fields) is never due.
 
 ## Installation
 

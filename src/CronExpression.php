@@ -19,6 +19,11 @@ use DateTimeInterface;
  * with Sunday = 0. Names (`MON`), macros (`@daily`) and `L`/`W`/`#` are not
  * supported and never match.
  *
+ * Day-of-month and day-of-week combine as in standard cron: when both are
+ * restricted (neither starts with `*`), a day matches if *either* does —
+ * `0 9 1,15 * 1-5` runs on the 1st, the 15th and every weekday. When one of
+ * them starts with `*` (including `*\/N`), both must match.
+ *
  * A malformed expression (not exactly five space-separated fields) is never
  * due — callers fail closed rather than throwing.
  *
@@ -42,11 +47,22 @@ final class CronExpression
             return false;
         }
 
-        return self::matchField($fields[0], (int) $time->format('i'))
-            && self::matchField($fields[1], (int) $time->format('G'))
-            && self::matchField($fields[2], (int) $time->format('j'))
-            && self::matchField($fields[3], (int) $time->format('n'))
-            && self::matchField($fields[4], (int) $time->format('w'));
+        if (!self::matchField($fields[0], (int) $time->format('i'))
+            || !self::matchField($fields[1], (int) $time->format('G'))
+            || !self::matchField($fields[3], (int) $time->format('n'))
+        ) {
+            return false;
+        }
+
+        $dayOfMonth = self::matchField($fields[2], (int) $time->format('j'));
+        $dayOfWeek = self::matchField($fields[4], (int) $time->format('w'));
+
+        // Standard (Vixie) cron: when both day fields are restricted, either may match.
+        if (!str_starts_with($fields[2], '*') && !str_starts_with($fields[4], '*')) {
+            return $dayOfMonth || $dayOfWeek;
+        }
+
+        return $dayOfMonth && $dayOfWeek;
     }
 
     /**

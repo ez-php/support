@@ -43,6 +43,15 @@ final class SupportCronExpressionTest extends TestCase
         yield 'list with step item' => ['0,*/20 * * * *', '2026-09-27 13:40', true];
         yield 'reversed range never matches' => ['0 18-8 * * *', '2026-09-27 20:00', false];
         yield 'stepped range zero step never matches' => ['0 8-18/0 * * *', '2026-09-27 08:00', false];
+        // Both day fields restricted: either may match (standard cron); otherwise both must.
+        yield 'restricted dom or dow: dow hit' => ['0 9 1,15 * 1-5', '2026-09-28 09:00', true];
+        yield 'restricted dom or dow: dom hit on a sunday' => ['0 9 1,15 * 1-5', '2026-11-01 09:00', true];
+        yield 'restricted dom or dow: neither' => ['0 9 1,15 * 1-5', '2026-09-27 09:00', false];
+        yield 'single dom and dow: dom hit' => ['0 0 27 * 1', '2026-09-27 00:00', true];
+        yield 'starred dom step keeps and' => ['0 0 */2 * 1', '2026-10-05 00:00', false];
+        yield 'starred dom step and dow both hit' => ['0 0 */2 * 1', '2026-09-28 00:00', true];
+        yield 'starred dow step keeps and' => ['0 0 27 * */2', '2026-09-28 00:00', false];
+        yield 'or still needs minute, hour and month' => ['0 9 1,15 10 1-5', '2026-09-28 09:00', false];
         yield 'empty list item is malformed' => ['1,,2 * * * *', '2026-09-27 13:01', false];
         yield 'non-numeric value is malformed' => ['5x * * * *', '2026-09-27 13:05', false];
         yield 'names are not supported' => ['0 0 * * MON', '2026-09-28 00:00', false];
