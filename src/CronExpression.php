@@ -15,9 +15,9 @@ use DateTimeInterface;
  *
  * Supported per field: `*` (any), `N` (exact value), `A-B` (inclusive range),
  * `*\/N` (every N steps from 0), `A-B/N` (every N steps from A up to B) and
- * comma-separated lists of those (`1,15,30`, `1-5,10`). Day-of-week uses 0–6
- * with Sunday = 0. Names (`MON`), macros (`@daily`) and `L`/`W`/`#` are not
- * supported and never match.
+ * comma-separated lists of those (`1,15,30`, `1-5,10`). Day-of-week uses 0–7
+ * with Sunday as 0 or 7, as in standard cron. Names (`MON`), macros (`@daily`)
+ * and `L`/`W`/`#` are not supported and never match.
  *
  * Day-of-month and day-of-week combine as in standard cron: when both are
  * restricted (neither starts with `*`), a day matches if *either* does —
@@ -55,7 +55,10 @@ final class CronExpression
         }
 
         $dayOfMonth = self::matchField($fields[2], (int) $time->format('j'));
-        $dayOfWeek = self::matchField($fields[4], (int) $time->format('w'));
+        $weekday = (int) $time->format('w');
+        // Sunday is 0 or 7, as in standard cron (`0 9 * * 7`, `5-7`).
+        $dayOfWeek = self::matchField($fields[4], $weekday)
+            || ($weekday === 0 && self::matchField($fields[4], 7));
 
         // Standard (Vixie) cron: when both day fields are restricted, either may match.
         if (!str_starts_with($fields[2], '*') && !str_starts_with($fields[4], '*')) {

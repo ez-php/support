@@ -28,6 +28,14 @@ final class SupportCronExpressionTest extends TestCase
         yield 'month' => ['0 0 * 10 *', '2026-09-27 00:00', false];
         yield 'sunday is 0' => ['0 0 * * 0', '2026-09-27 00:00', true];
         yield 'monday' => ['0 0 * * 1', '2026-09-28 00:00', true];
+        yield 'sunday is also 7' => ['0 0 * * 7', '2026-09-27 00:00', true];
+        yield '7 does not match monday' => ['0 0 * * 7', '2026-09-28 00:00', false];
+        yield 'range up to 7 includes sunday' => ['0 9 * * 5-7', '2026-09-27 09:00', true];
+        yield 'range up to 7 still matches friday' => ['0 9 * * 5-7', '2026-09-25 09:00', true];
+        yield 'range up to 7 misses monday' => ['0 9 * * 5-7', '2026-09-28 09:00', false];
+        yield 'list with 7 includes sunday' => ['0 9 * * 1,7', '2026-09-27 09:00', true];
+        yield 'stepped range reaching 7 includes sunday' => ['0 9 * * 1-7/2', '2026-09-27 09:00', true];
+        yield 'day-of-week 8 never matches' => ['0 0 * * 8', '2026-09-27 00:00', false];
         yield 'leading zero minute' => ['05 * * * *', '2026-09-27 13:05', true];
         yield 'range hit (weekday)' => ['0 9 * * 1-5', '2026-09-28 09:00', true];
         yield 'range miss (sunday)' => ['0 9 * * 1-5', '2026-09-27 09:00', false];
